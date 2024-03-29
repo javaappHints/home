@@ -1,0 +1,76 @@
+// Kao i do sada krece od Zajednickog, u paketima transfer i konctante sve ostaje kao i kod Tipicnih rokova
+// Paket domen treba malo drugacije da izgleda
+// U domenu je potrebno napraciti 2 klase: Igra i RezultatIgre
+// Klasa Igra izgleda ovako:
+
+    private RezultatIgre rezultatIgre;
+    private int rb;
+    private String kombinacija;
+    private int pogodjenihNaMestu;
+    private int pogodjenihNisuNaMestu;
+
+// plus na ovo dodati konstruktor i gettere i settere
+// Klasa RezultatIgre izgleda ovako:
+
+    private long rezultatIgreID;
+    private Date datumVreme;
+    private String zadataKombinacija;
+    private int brojPokusaja;
+    private String rezultat;
+    private ArrayList<Igra> igre;
+
+// plus na ovo dodati konstruktor i gettere i settere
+// Importovati dist Zajendickog u Klijent i Server
+// Sada pisanje shell-a za tipicno rok, hint: Preskoci bazu i model tabele za server
+
+// Kada napises PokreniServer i ObradaKlijentskihZahteva, krece pisanje BingoNit-i
+// Bingo nit izgleda ovako:
+
+public class BingoNit extends Thread {
+
+    private JLabel lblPrviBroj;
+    private JLabel lblDrugiBroj;
+    private JLabel lblTreciBroj;
+    private JLabel lblCetvrtiBroj;
+    private boolean aktivna;
+
+    public BingoNit(JLabel lblPrviBroj, JLabel lblDrugiBroj, JLabel lblTreciBroj, JLabel lblCetvrtiBroj) {
+        this.lblPrviBroj = lblPrviBroj;
+        this.lblDrugiBroj = lblDrugiBroj;
+        this.lblTreciBroj = lblTreciBroj;
+        this.lblCetvrtiBroj = lblCetvrtiBroj;
+        this.aktivna = true;
+    }
+
+    @Override
+    public void run() {
+        while (aktivna) {
+            
+            long prviBroj = Math.round(Math.random() * 5);
+            long drugiBroj = Math.round(Math.random() * 5);
+            long treciBroj = Math.round(Math.random() * 5);
+            long cetvrtiBroj = Math.round(Math.random() * 5);
+
+            lblPrviBroj.setText(String.valueOf(prviBroj));
+            lblDrugiBroj.setText(String.valueOf(drugiBroj));
+            lblTreciBroj.setText(String.valueOf(treciBroj));
+            lblCetvrtiBroj.setText(String.valueOf(cetvrtiBroj));
+
+            try {
+                sleep(100);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(BingoNit.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+
+    public void stopirajNit() {
+        this.aktivna = false;
+    }
+
+    public boolean isAktivna() {
+        return aktivna;
+    }
+
+}
+
