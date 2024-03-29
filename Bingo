@@ -74,3 +74,257 @@ public class BingoNit extends Thread {
 
 }
 
+// ova Klasa ima JLabale-e kao varijable. I sluzi za generisanje brojeva na samoj Serverskoj Formi
+// Sada je potrebno napraviti ServerskiFormu kao sa slike
+// U serverskoj Formi instance klasa BingoNit i PokreniServer instancirati kao globalne varijable
+
+// Dugme start radi ovako:
+
+if (bingoNit == null || !bingoNit.isAlive()) {
+            bingoNit = new BingoNit(lblPrviBroj, lblDrugiBroj, lblTreciBroj, lblCetvrtiBroj);
+            bingoNit.start();
+        }
+
+//Dugme stop izgleda ovako:
+
+if (bingoNit != null) {
+            bingoNit.stopirajNit();
+        }
+
+// Dugme PokreniIgru izgleda ovako:
+
+if (bingoNit != null) {
+            if (!bingoNit.isAktivna()) {
+                pokreniServer = new PokreniServer();
+                pokreniServer.start();
+                btnPokreniIgru.setEnabled(false);
+                btnStart.setEnabled(false);
+                btnStop.setEnabled(false);
+                btnPokreniIgru.setText("Igra je pokrenuta!");
+
+                int prviBroj = Integer.parseInt(lblPrviBroj.getText());
+                int drugiBroj = Integer.parseInt(lblDrugiBroj.getText());
+                int treciBroj = Integer.parseInt(lblTreciBroj.getText());
+                int cetvrtiBroj = Integer.parseInt(lblCetvrtiBroj.getText());
+
+                int[] dobitnaKombinacija = new int[4];
+                dobitnaKombinacija[0] = prviBroj;
+                dobitnaKombinacija[1] = drugiBroj;
+                dobitnaKombinacija[2] = treciBroj;
+                dobitnaKombinacija[3] = cetvrtiBroj;
+
+                Kontroler.getInstance().setDobitnaKombinacijaBrojeva(dobitnaKombinacija);
+
+            } else {
+                JOptionPane.showMessageDialog(this, "Morate prvo da stopirate brojeve!");
+            }
+
+// Kontroler napisi klasicno i predji na Klijentski deo
+
+// Kod Klijentskog dela, napraviti KlijentskuFormu, modelTabele i Komunikaciju kao kod Tipicnih rokova
+// Nakon toga krece izrada niti na klijentskoj strani
+// Prave se 4 niti koje su iste kao i BingoNit na Serveru
+// Svaka od njih izgleda ovako:
+
+private JLabel lblPrviBroj;
+    private boolean aktivna;
+
+    public PrvaNit(JLabel lblPrviBroj) {
+        this.lblPrviBroj = lblPrviBroj;
+        this.aktivna = true;
+    }
+
+    @Override
+    public void run() {
+        while (aktivna) {
+            lblPrviBroj.setText(String.valueOf(Math.round(Math.random() * 5)));
+            try {
+                sleep(100);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(PrvaNit.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+
+    public boolean isAktivna() {
+        return aktivna;
+    }
+
+    public void stopiraj() {
+        this.aktivna = false;
+    }
+
+// Kada se ovo napravi pristupa se izradi KlijentskeForme
+// KlijentskuFormu dizajnerski napraviti kao sa slike roka
+// U Klijentskoj Formi, instance 4 niti za generisanje brojeva i brojac instancirati kao globalne varijable
+// 4 puta pravis start i stop dugme koji rade ovako:
+
+// start dugme:
+if (prvaNit == null || !prvaNit.isAlive()) {
+            prvaNit = new PrvaNit(lblPrviBroj);
+            prvaNit.start();
+        }
+
+// stop dugme:
+if (prvaNit != null && prvaNit.isAktivna()) {
+            prvaNit.stopiraj();
+        }
+
+// Dugme posalji radi ovako:
+
+if (daLiSuAktivneNiti()) {
+            JOptionPane.showMessageDialog(this, "Morate prvo da stopirate brojeve!");
+            return;
+        }
+
+        int prviBroj = Integer.parseInt(lblPrviBroj.getText());
+        int drugiBroj = Integer.parseInt(lblDrugiBroj.getText());
+        int treciBroj = Integer.parseInt(lblTreciBroj.getText());
+        int cetvrtiBroj = Integer.parseInt(lblCetvrtiBroj.getText());
+
+        int[] brojevi = new int[5];
+        brojevi[0] = prviBroj;
+        brojevi[1] = drugiBroj;
+        brojevi[2] = treciBroj;
+        brojevi[3] = cetvrtiBroj;
+        brojevi[4] = ++brojPokusaja; // ovde sam cuvao broj pokusaja
+
+        KlijentskiZahtev kz = new KlijentskiZahtev();
+        kz.setOperacija(Operacije.POSALJI_KOMBINACIJU);
+        kz.setParametar(brojevi);
+
+        Komunikacija.getInstance().posaljiZahtev(kz);
+        ServerskiOdgovor so = Komunikacija.getInstance().primiOdgovor();
+
+        Igra igra = (Igra) so.getOdgovor();
+
+        if (igra == null) {
+            JOptionPane.showMessageDialog(this, "Doslo je do greske prilikom slanja kombinacije...");
+        } else {
+            ModelTabeleIgre mt = (ModelTabeleIgre) tblRezultat.getModel();
+            mt.dodajRezultat(igra);
+
+            lblPogodjeniNaMestu.setText(String.valueOf(igra.getPogodjenihNaMestu()));
+            lblPogodjeniNisuNaMestu.setText(String.valueOf(igra.getPogodjenihNisuNaMestu()));
+
+            if (igra.getPogodjenihNaMestu() == 4) {
+                JOptionPane.showMessageDialog(this, "Pronasli ste tacnu kombinaciju. Pobedili ste! "
+                        + "Ako zelite da sacuvate ovu igru, to mozete uraditi na serverskoj aplikaciji.");
+                System.exit(0);
+            }
+
+            if (brojPokusaja == 6) {
+                JOptionPane.showMessageDialog(this, "Dostigli ste maksimalan broj pokusaja. "
+                        + "Izgubili ste! Ako zelite da sacuvate ovu igru, to mozete uraditi "
+                        + "na serverskoj aplikaciji.");
+                System.exit(0);
+            } else {
+                JOptionPane.showMessageDialog(this, "Preostalo vam je " + (6 - brojPokusaja) + " "
+                        + "pokusaja.");
+            }
+
+        }
+
+// funkcija daLiSuAktivne izgleda ovako:
+
+if (prvaNit.isAktivna() == true || drugaNit.isAktivna() == true
+                || trecaNit.isAktivna() == true || cetvrtaNit.isAktivna() == true) {
+            return true;
+        }
+        return false;
+
+// Obrada KZ za ovaj KZ izgleda ovako:
+
+case Operacije.POSALJI_KOMBINACIJU:
+                    int[] brojevi = (int[]) kz.getParametar();
+                    Igra igra = Kontroler.getInstance().vratiRezultat(brojevi);
+                    so.setOdgovor(igra);
+                    break;
+
+//Kontroler izgleda ovako:
+
+private static Kontroler instance;
+    private DBBroker dbb;
+    private int[] dobitnaKombinacijaBrojeva = new int[4];
+    private RezultatIgre rezultatIgre = new RezultatIgre(0, null,
+            null, 0, "Izgubio", new ArrayList<>());
+    private int rbIgre = 0;
+
+    private Kontroler() {
+        dbb = new DBBroker();
+    }
+
+    public static Kontroler getInstance() {
+        if (instance == null) {
+            instance = new Kontroler();
+        }
+        return instance;
+    }
+
+    public int[] getDobitnaKombinacijaBrojeva() {
+        return dobitnaKombinacijaBrojeva;
+    }
+
+    public void setDobitnaKombinacijaBrojeva(int[] dobitnaKombinacijaBrojeva) {
+        this.dobitnaKombinacijaBrojeva = dobitnaKombinacijaBrojeva;
+    }
+    
+    public Igra vratiRezultat(int[] brojevi) {
+        rezultatIgre.setBrojPokusaja(brojevi[4]);
+        
+        int pogodjeniNaMestu = 0;
+        int pogodjeniNisuNaMestu = 0;
+        boolean[] nizPogodjenNaMjestu = new boolean[dobitnaKombinacijaBrojeva.length];
+        boolean[] nizPogodjenNaPogresnomMjestu = new boolean[dobitnaKombinacijaBrojeva.length];
+
+        for (int i = 0; i < dobitnaKombinacijaBrojeva.length; i++) {
+            if (brojevi[i] == dobitnaKombinacijaBrojeva[i]) {
+                pogodjeniNaMestu++;
+                nizPogodjenNaMjestu[i] = true;
+            }
+        }
+
+        for (int i = 0; i < dobitnaKombinacijaBrojeva.length; i++) {
+            if (!nizPogodjenNaMjestu[i]) {
+                for (int j = 0; j < dobitnaKombinacijaBrojeva.length; j++) {
+                    if (dobitnaKombinacijaBrojeva[i] == brojevi[j] && !nizPogodjenNaMjestu[j]
+                            && !nizPogodjenNaPogresnomMjestu[j]) {
+                        pogodjeniNisuNaMestu++;
+                        nizPogodjenNaPogresnomMjestu[j] = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        Igra ig = new Igra(null, ++rbIgre, brojevi[0] + "-" + brojevi[1] + "-" + brojevi[2] + "-" + brojevi[3],
+                pogodjeniNaMestu, pogodjeniNisuNaMestu);
+        rezultatIgre.getIgre().add(ig);
+        
+        return ig;
+    }
+
+    public boolean sacuvajRezultat() {
+        try {
+
+            if (rezultatIgre.getIgre().isEmpty()) {
+                return false;
+            }
+
+            rezultatIgre.setZadataKombinacija(dobitnaKombinacijaBrojeva[0] + "-"
+                    + dobitnaKombinacijaBrojeva[1]
+                    + "-" + dobitnaKombinacijaBrojeva[2] + "-"
+                    + dobitnaKombinacijaBrojeva[3]);
+
+            return dbb.sacuvajRezultat(rezultatIgre);
+
+        } catch (SQLException ex) {
+            Logger.getLogger(Kontroler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return false;
+    }
+
+    public ArrayList<RezultatIgre> vratiRezultate() {
+        return dbb.vratiRezultate();
+    }
+
