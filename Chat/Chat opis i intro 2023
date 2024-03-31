@@ -1,0 +1,419 @@
+// Kao i do sad krece se od Zajednickog
+// Pravis kao u normalnom shellu pakete: konstante i transfer
+// U paketu domen imas 3 klase: Poruka, Korisnik i Administrator
+// Poruka izgkleda ovako:
+
+    private long porukaID;
+    private String posiljalac;
+    private String primalac;
+    private Date datumVreme;
+    private String poruka;
+// + konstruktor, getteri i setteri
+
+// Administrator izgleda ovako:
+
+    private long administratorID;
+    private String email;
+    private String lozinka;
+    private String ime;
+    private String prezime;
+// + konstruktor, getteri i setteri
+
+// Korisnik izgleda ovako:
+
+    private long korisnikID;
+    private String username;
+    private String password;
+// + konstruktor, getteri i setteri
+
+// Clean&Build i importujes dist folder u Klijenta i Servera
+
+// Dalje nastavljas pisanje shell=a sve do kraja isto kao i za tipicne rokove
+// Razlike su u PokreniServer klasi gde je ServerSocket globalna varijabla i ima svoje gettere i settere
+// Kontroler ima globalnu varijablu Serverske forme +getter i setter za nju
+// Komunikacija ima globalnu variajblu KlijnetskeForme +getter i setter za nju
+
+
+// Login admina - klasika samo sto odmah ides na Kontroler i odatle iz DBB izvlacis kredencijale za Admina
+// Kada se uloguje na ServerskojFOrmi settujes tog Administratora i napravis ga koa Globalnu varijablu:
+
+    Administrator ulogovani;
+
+    public void setUlogovani(Administrator ulogovani) {
+        this.ulogovani = ulogovani;
+        lblAdmin.setText("Prijavljeni administrator: " + ulogovani);
+    }
+
+// Za sledeci zahtev potrebno je da napravis i PokreniServer kao Globalnu varijablu u ServerskojFormi
+// Ovako treba da izgleda konstruktor ServerskeForme:
+
+        public ServerskaForma() {
+        initComponents();
+        setLocationRelativeTo(null);
+        lblServerStatus.setText("Server je ugasen!");
+        btnPokreniServer.setEnabled(true);
+        btnUgasiServer.setEnabled(false);
+        setTitle("Serverska forma");
+        }
+// Dugme PokreniServer izgleda ovako:
+
+        pokreniServer = new PokreniServer();
+        pokreniServer.start();
+        lblServerStatus.setText("Server je pokrenut.");
+        btnUgasiServer.setEnabled(true);
+        btnPokreniServer.setEnabled(false);
+
+// Dugme ZaustaviServer izgleda ovako:
+
+            pokreniServer.getServerskiSoket().close();
+
+            lblServerStatus.setText("Server je ugasen.");
+            btnPokreniServer.setEnabled(true);
+            btnUgasiServer.setEnabled(false);
+        } catch (IOException ex) {
+            Logger.getLogger(ServerskaForma.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+// Na ServerskojFormi napraviti dugme NOviKorisnik koje otvara novu Formu
+// Dodavanje korisnika:
+
+        String username = txtUsername.getText();
+        String password = String.copyValueOf(txtPassword.getPassword());
+
+        if (username.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Sva polja moraju biti popunjena!");
+            return;
+        }
+
+        for (int i = 0; i < username.length(); i++) {
+            if (!Character.isLetter(username.charAt(i))) {
+                JOptionPane.showMessageDialog(this, "Username moze da sadrzi samo slova!");
+                return;
+            }
+        }
+
+        if (!password.matches(".*[a-zA-Z]+.*")) {
+            JOptionPane.showMessageDialog(this, "Password mora da sadrzi barem jedno slovo!");
+            return;
+        };
+
+        if (!Pattern.compile("[0-9]").matcher(password).find()) {
+            JOptionPane.showMessageDialog(this, "Password mora da sadrzi barem jedan broj!");
+            return;
+        }
+
+        Korisnik k = new Korisnik(-1, username, password);
+
+        boolean uspesno = Kontroler.getInstance().dodajKorisnika(k);
+
+        if (uspesno) {
+            Kontroler.getInstance().getSf().refreshujTabelu();
+            JOptionPane.showMessageDialog(this, "Uspesno sacuvan korisnik!");
+        } else {
+            JOptionPane.showMessageDialog(this, "Vec postoji korisnik sa tim korisnickim imenom!");
+        }
+
+// Kontroler i DBB za ovo izgledaju klasicno kao za dodavanje bilo kojeg usera
+
+// Za sledeci zahtev modifikovati model tabele server klasu:
+
+    ArrayList<Korisnik> lista;
+    String[] kolone = {"KorisnikID", "Username", "Ulogovan"};
+
+    public ModelTabeleKorisnici() {
+
+        // napravio sam praznu listu
+        lista = new ArrayList<>();
+
+        // vratio sam sve ulogovane
+        ArrayList<Korisnik> ulogovaniKorisnici = Kontroler.getInstance().getUlogovaniKorisnici();
+        // vratio sve korisnike
+        ArrayList<Korisnik> sviKorisnici = Kontroler.getInstance().vratiSveKorisnike();
+
+        for (Korisnik korisnik : sviKorisnici) {
+            if (ulogovaniKorisnici.contains(korisnik)) {
+                lista.add(korisnik);
+            }
+        }
+
+        for (Korisnik korisnik : sviKorisnici) {
+            if (!ulogovaniKorisnici.contains(korisnik)) {
+                lista.add(korisnik);
+            }
+        }
+
+    }
+
+    @Override
+    public int getRowCount() {
+        return lista.size();
+    }
+
+    @Override
+    public int getColumnCount() {
+        return kolone.length;
+    }
+
+    @Override
+    public String getColumnName(int columnIndex) {
+        return kolone[columnIndex];
+    }
+
+    @Override
+    public Class<?> getColumnClass(int columnIndex) {
+        if (columnIndex == 2) {
+            return Boolean.class;
+        }
+        return super.getColumnClass(columnIndex); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Object getValueAt(int rowIndex, int columnIndex) {
+        Korisnik k = lista.get(rowIndex);
+
+        switch (columnIndex) {
+            case 0:
+                return k.getKorisnikID();
+            case 1:
+                return k.getUsername();
+            case 2:
+                return Kontroler.getInstance().daLiJeUlogovan(k);
+
+            default:
+                return "return!";
+        }
+    }
+
+}
+
+// Sada na ServerskojFormi u konstruktoru dodati kod za ModelTabele:
+
+        Kontroler.getInstance().setSf(this); // morao sam da setujem sf zbog refresha tabele
+        refreshujTabelu();
+
+        public void refreshujTabelu() {
+        tblKorisnici.setModel(new ModelTabeleKorisnici());
+    }
+
+// U kontroleru dodati globalnu varijablu ulogovaniKorisnici koja je Arraylist\
+// getter za nju
+// funkcija daLiJeUlogovanKorisnik i funkcija koja vraca sve korisnike
+
+public boolean daLiJeUlogovan(Korisnik k) {
+        // u korisniku sam redefinisao equals metodu
+        // udji u tu klasu i pogledaj komentar iznad equals
+        for (Korisnik korisnik : ulogovaniKorisnici) {
+            if (korisnik.equals(k)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public ArrayList<Korisnik> vratiSveKorisnike() {
+        return dbb.vratiSveKorisnike();
+    }
+
+// Napraviti Klijentsku formu kao sa slike
+// Login forma klasicno, kao i ObradaKlijentskihZahteva
+// Login funckija u kontroleru izgleda ovako:
+
+public Korisnik login(String username, String password) {
+        Korisnik ulogovani = dbb.login(username, password);
+
+        if (ulogovani != null) {
+
+            if (ulogovaniKorisnici.contains(ulogovani)) {
+                ulogovani.setKorisnikID(-1);
+                return ulogovani;
+            }
+
+            ulogovaniKorisnici.add(ulogovani);
+            Kontroler.getInstance().getSf().refreshujTabelu();
+        }
+
+        return ulogovani;
+    }
+
+// redfinisati equals metodu u Korisniku:
+
+@Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Korisnik other = (Korisnik) obj;
+        if (this.korisnikID != other.korisnikID) {
+            return false;
+        }
+        return true;
+    }
+
+// Dugme posalji poruku svima izgleda ovako:
+
+        String poruka = txtPoruka.getText();
+
+        Poruka p = new Poruka(-1, ulogovani.getUsername(), "Svi", new Date(), poruka);
+
+        KlijentskiZahtev kz = new KlijentskiZahtev();
+        kz.setOperacija(Operacije.SACUVAJ_PORUKU);
+        kz.setParametar(p);
+
+        Komunikacija.getInstance().posaljiZahtev(kz);
+        ServerskiOdgovor so = Komunikacija.getInstance().primiOdgovor();
+
+        boolean uspesno = (boolean) so.getOdgovor();
+
+        if (uspesno) {
+            JOptionPane.showMessageDialog(this, "Poruka uspesno poslata!");
+        } else {
+            JOptionPane.showMessageDialog(this, "Doslo je do greske prilikom slanja poruke...");
+        }
+
+// ObradaKlijentsihZahteva, Kontroler i DBB standardno
+
+// Salnje poruke samo odredjenom ulogovanom korisniku se realizuje ovako:
+// Dugme na Klijentskoj koje otvara novu formu, na toj formi je table asa svim trenutno ulogovanim korisnicima
+
+// Konstruktor joj izgleda ovako:
+
+public FormaUlogovaniKorisnici(java.awt.Frame parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
+        setLocationRelativeTo(null);
+        setTitle("Prikaz svih ulogovanih korisnika");
+        ModelTabeleKorisnici model = new ModelTabeleKorisnici();
+        Thread thread = new Thread(model);
+        thread.start();
+        tblUlogovani.setModel(model);
+    }
+
+// ModelTabele za ovu abelu izgleda ovako:
+
+public class ModelTabeleKorisnici extends AbstractTableModel implements Runnable {
+
+    ArrayList<Korisnik> lista;
+    String[] kolone = {"KorisnikID", "Username"};
+
+    public ModelTabeleKorisnici() {
+
+        // vratio sam sve ulogovane korisnike
+        KlijentskiZahtev kz = new KlijentskiZahtev();
+        kz.setOperacija(Operacije.VRATI_ULOGOVANE);
+
+        Komunikacija.getInstance().posaljiZahtev(kz);
+        ServerskiOdgovor so = Komunikacija.getInstance().primiOdgovor();
+
+        lista = (ArrayList<Korisnik>) so.getOdgovor();
+    }
+
+    @Override
+    public int getRowCount() {
+        return lista.size();
+    }
+
+    @Override
+    public int getColumnCount() {
+        return kolone.length;
+    }
+
+    @Override
+    public String getColumnName(int columnIndex) {
+        return kolone[columnIndex];
+    }
+
+    @Override
+    public Object getValueAt(int rowIndex, int columnIndex) {
+        Korisnik k = lista.get(rowIndex);
+
+        switch (columnIndex) {
+            case 0:
+                return k.getKorisnikID();
+            case 1:
+                return k.getUsername();
+
+            default:
+                return "return!";
+        }
+    }
+
+    @Override
+    public void run() {
+        while (true) {
+            try {
+                
+                // na svake 3 sekunde se refreshuje tabela i vraca sve ulogovane
+                KlijentskiZahtev kz = new KlijentskiZahtev();
+                kz.setOperacija(Operacije.VRATI_ULOGOVANE);
+                
+                Komunikacija.getInstance().posaljiZahtev(kz);
+                ServerskiOdgovor so = Komunikacija.getInstance().primiOdgovor();
+                
+                lista = (ArrayList<Korisnik>) so.getOdgovor();
+                fireTableDataChanged();
+                
+                Thread.sleep(3000);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(ModelTabeleKorisnici.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+
+    public Korisnik getKorisnik(int row) {
+        return lista.get(row);
+    }
+
+}
+
+// Dugme izaberi korisnika bira izabranog, gasi ovu formu i prosledjuje istog Klijentskoj Formi
+
+        int row = tblUlogovani.getSelectedRow();
+        
+        if(row != -1){
+            ModelTabeleKorisnici mt = (ModelTabeleKorisnici) tblUlogovani.getModel();
+            Korisnik k = mt.getKorisnik(row);
+            
+            KlijentskaForma kf = (KlijentskaForma) getParent();
+            kf.setujKorisnika(k);
+            this.dispose();
+        }
+
+// U Klijentskoj formi setuje korinsika ovako:
+
+void setujKorisnika(Korisnik k) {
+        txtKorisnik.setText(k.getUsername());
+    }
+
+// Slanje te poruke se realizuje preko drugog dugmeta i ono radi ovako:
+
+        String poruka = txtPoruka.getText();
+        String usernamePrimaoca = txtKorisnik.getText();
+
+        if ("Izaberi korisnika iz liste ulogovanih".equals(usernamePrimaoca)) {
+            JOptionPane.showMessageDialog(this, "Morate izabrati korisnika kome saljete poruku!");
+            return;
+        }
+
+        Poruka p = new Poruka(-1, ulogovani.getUsername(), usernamePrimaoca, new Date(), poruka);
+
+        KlijentskiZahtev kz = new KlijentskiZahtev();
+        kz.setOperacija(Operacije.SACUVAJ_PORUKU);
+        kz.setParametar(p);
+
+        Komunikacija.getInstance().posaljiZahtev(kz);
+        ServerskiOdgovor so = Komunikacija.getInstance().primiOdgovor();
+
+        boolean uspesno = (boolean) so.getOdgovor();
+
+        if (uspesno) {
+            JOptionPane.showMessageDialog(this, "Poruka uspesno poslata!");
+        } else {
+            JOptionPane.showMessageDialog(this, "Doslo je do greske prilikom slanja poruke...");
+        }
+
