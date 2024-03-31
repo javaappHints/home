@@ -1,0 +1,22 @@
+ Kao i do sad krece se od Zajednickog
+// Pravis kao u normalnom shellu pakete: konstante i transfer
+// U paketu domen imas 3 klase: Poruka, Korisnik i Administrator
+// Poruka izgkleda ovako:
+
+    private long porukaID;
+    private String posiljalac;
+    private String primalac;
+    private Date datumVreme;
+    private String poruka;
+// + konstruktor, getteri i setteri
+
+// Korisnik izgleda ovako:
+
+    private long korisnikID;
+    private String username;
+    private String password;
+// + konstruktor, getteri i setteri
+
+// Clean&Build i importujes dist folder u Klijenta i Servera
+
+// Dalje nastavljas pisanje shell=a sve do kraja isto kao i za tipicne rokove
