@@ -1,0 +1,86 @@
+//Kontroler izgleda ovako:
+
+private static Kontroler instance;
+    private DBBroker dbb;
+    private int[] dobitnaKombinacijaBrojeva = new int[4];
+    private RezultatIgre rezultatIgre = new RezultatIgre(0, null,
+            null, 0, "Izgubio", new ArrayList<>());
+    private int rbIgre = 0;
+
+    private Kontroler() {
+        dbb = new DBBroker();
+    }
+
+    public static Kontroler getInstance() {
+        if (instance == null) {
+            instance = new Kontroler();
+        }
+        return instance;
+    }
+
+    public int[] getDobitnaKombinacijaBrojeva() {
+        return dobitnaKombinacijaBrojeva;
+    }
+
+    public void setDobitnaKombinacijaBrojeva(int[] dobitnaKombinacijaBrojeva) {
+        this.dobitnaKombinacijaBrojeva = dobitnaKombinacijaBrojeva;
+    }
+    
+    public Igra vratiRezultat(int[] brojevi) {
+        rezultatIgre.setBrojPokusaja(brojevi[4]);
+        
+        int pogodjeniNaMestu = 0;
+        int pogodjeniNisuNaMestu = 0;
+        boolean[] nizPogodjenNaMjestu = new boolean[dobitnaKombinacijaBrojeva.length];
+        boolean[] nizPogodjenNaPogresnomMjestu = new boolean[dobitnaKombinacijaBrojeva.length];
+
+        for (int i = 0; i < dobitnaKombinacijaBrojeva.length; i++) {
+            if (brojevi[i] == dobitnaKombinacijaBrojeva[i]) {
+                pogodjeniNaMestu++;
+                nizPogodjenNaMjestu[i] = true;
+            }
+        }
+
+        for (int i = 0; i < dobitnaKombinacijaBrojeva.length; i++) {
+            if (!nizPogodjenNaMjestu[i]) {
+                for (int j = 0; j < dobitnaKombinacijaBrojeva.length; j++) {
+                    if (dobitnaKombinacijaBrojeva[i] == brojevi[j] && !nizPogodjenNaMjestu[j]
+                            && !nizPogodjenNaPogresnomMjestu[j]) {
+                        pogodjeniNisuNaMestu++;
+                        nizPogodjenNaPogresnomMjestu[j] = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        Igra ig = new Igra(null, ++rbIgre, brojevi[0] + "-" + brojevi[1] + "-" + brojevi[2] + "-" + brojevi[3],
+                pogodjeniNaMestu, pogodjeniNisuNaMestu);
+        rezultatIgre.getIgre().add(ig);
+        
+        return ig;
+    }
+
+    public boolean sacuvajRezultat() {
+        try {
+
+            if (rezultatIgre.getIgre().isEmpty()) {
+                return false;
+            }
+
+            rezultatIgre.setZadataKombinacija(dobitnaKombinacijaBrojeva[0] + "-"
+                    + dobitnaKombinacijaBrojeva[1]
+                    + "-" + dobitnaKombinacijaBrojeva[2] + "-"
+                    + dobitnaKombinacijaBrojeva[3]);
+
+            return dbb.sacuvajRezultat(rezultatIgre);
+
+        } catch (SQLException ex) {
+            Logger.getLogger(Kontroler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return false;
+    }
+
+    public ArrayList<RezultatIgre> vratiRezultate() {
+        return dbb.vratiRezultate();
+    }
