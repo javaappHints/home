@@ -1,0 +1,18 @@
+// ovo ne radi bez importa
+import java.util.*
+
+        Properties properties = new Properties();
+        int maxBrojKlijenata = -1; // ovde ime atributa
+
+        try {
+            properties.load(new FileInputStream("app.config.properties")); // ime property fajla
+
+            maxBrojKlijenata = Integer.parseInt(properties.getProperty("max_broj_klijenata"));
+            new ServerskaForma(maxBrojKlijenata).setVisible(true);
+
+        } catch (Exception ex) {
+            System.out.println("Sistem ne moze da pronadje properties fajl! "
+                    + "Napravite ga, pa pokrenite opet aplikaciju.");
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            System.exit(0);
+        }
