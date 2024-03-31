@@ -1,0 +1,20 @@
+// Kad za login treba da poredis da li je vec ulogovan moras da promenis equals metodu
+
+@Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Korisnik other = (Korisnik) obj;
+        if (this.korisnikID != other.korisnikID) {
+            return false;
+        }
+        return true;
+    }
+
