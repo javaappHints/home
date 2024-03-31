@@ -1,0 +1,71 @@
+// Autoincrement ide kada imamo jak-slab objekat u DBB funkciji jakog objekta
+
+Primer:
+
+    public boolean sacuvajPrijavu(Prijava prijava) throws SQLException {
+        String upit = "INSERT INTO PRIJAVA (Drzavljanstvo, JMBG, Ime, Prezime, "
+                + "ElektronskaPosta, MobilniTelefon, SpecificnaOboljenja, DatumPrijave,"
+                + "OpstinaID) VALUES (?,?,?,?,?,?,?,?,?)";
+        try {
+            PreparedStatement ps = Konekcija.getInstance().getConnection()
+                    .prepareStatement(upit, Statement.RETURN_GENERATED_KEYS);
+
+            ps.setString(1, prijava.getDrzavljanstvo());
+            ps.setString(2, prijava.getJMBG());
+            ps.setString(3, prijava.getIme());
+            ps.setString(4, prijava.getPrezime());
+            ps.setString(5, prijava.getElektronskaPosta());
+            ps.setString(6, prijava.getMobilniTelefon());
+            ps.setBoolean(7, prijava.isSpecificnaOboljenja());
+            ps.setTimestamp(8, new Timestamp(System.currentTimeMillis()));
+            ps.setLong(9, prijava.getOpstina().getOpstinaID());
+
+            ps.executeUpdate();
+
+            ResultSet tableKeys = ps.getGeneratedKeys();
+            tableKeys.next();
+            long prijavaID = tableKeys.getLong(1);
+            
+            prijava.setPrijavaID(prijavaID);
+
+            if (sacuvajStavkePrijave(prijava)) {
+                Konekcija.getInstance().getConnection().commit();
+                return true;
+            } else {
+                Konekcija.getInstance().getConnection().rollback();
+                return false;
+            }
+
+        } catch (SQLException ex) {
+            Konekcija.getInstance().getConnection().rollback();
+            Logger.getLogger(DBBroker.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return false;
+    }
+
+    private boolean sacuvajStavkePrijave(Prijava prijava) throws SQLException {
+        String upit = "INSERT INTO STAVKAPRIJAVE VALUES (?,?,?)";
+        try {
+            PreparedStatement ps = Konekcija.getInstance().getConnection().prepareStatement(upit);
+
+            ArrayList<StavkaPrijave> stavkePrijave = prijava.getStavkePrijave();
+
+            for (StavkaPrijave sp : stavkePrijave) {
+                ps.setLong(1, prijava.getPrijavaID());
+                ps.setInt(2, sp.getRedniBroj());
+                ps.setString(3, sp.getTipVakcine());
+
+                ps.addBatch();
+            }
+
+            ps.executeBatch();
+            Konekcija.getInstance().getConnection().commit();
+
+            return true;
+
+        } catch (SQLException ex) {
+            Konekcija.getInstance().getConnection().rollback();
+            Logger.getLogger(DBBroker.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return false;
+    }
