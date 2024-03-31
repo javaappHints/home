@@ -1,0 +1,50 @@
+// Na kontroleru imas listu ulogovanih korisnika kao globalnu varijablu
+// za tu listu imas getter
+
+// kada se korsinik loginuje, ta funkcija izgleda ovako:
+
+public Korisnik login(String username, String password) {
+        Korisnik k = dbb.login(username, password);
+
+        if (k != null) {
+            ulogovaniKorisnici.add(k);
+            sf.refreshujTabelu();
+            klijenti.add(k);
+            return k;
+        }
+
+        return null;
+    }
+
+// potrebna ti je lista Obrada Klijentskih Zahteva kao globalna varijabla:
+
+  private ArrayList<ObradaKlijentskihZahteva> klijenti = new ArrayList<>();
+
+// Ova funckija gasi Socket vezu izmedju Klijenta i Servera:
+
+        public void zaustaviSveNiti() {
+        for (ObradaKlijentskihZahteva obradaKlijentskihZahteva : klijenti) {
+            try {
+                ulogovaniKorisnici.clear();
+                sf.refreshujTabelu();
+                obradaKlijentskihZahteva.getSocket().close();
+            } catch (IOException ex) {
+                Logger.getLogger(Kontroler.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+
+// U Komunikaciji na Klijentu, ta klasa ima KlijentskuFormu kao globalnu varijablu i getter za nju
+// U catch delu ProsaljiZahtev dodajes liniju koda:
+
+kf.ugasiAplikaciju();
+
+// U Klijentskoj formi je to ova funkcija:
+
+public void ugasiAplikaciju() {
+        // 59. linija koda u komunikaciji poziva ovu metodu
+        // baca se exception kada ne moze vise da posalje zahtev serveru
+        JOptionPane.showMessageDialog(this, "Server vas je odjavio, gasenje aplikacije...");
+        this.dispose();
+        System.exit(0);
+    }
