@@ -1,0 +1,28 @@
+if (username.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Sva polja moraju biti popunjena!");
+            return;
+        }
+
+        for (int i = 0; i < username.length(); i++) {
+            if (!Character.isLetter(username.charAt(i))) {
+                JOptionPane.showMessageDialog(this, "Username moze da sadrzi samo slova!");
+                return;
+            }
+        }
+
+        if (!password.matches(".*[a-zA-Z]+.*")) {
+            JOptionPane.showMessageDialog(this, "Password mora da sadrzi barem jedno slovo!");
+            return;
+        };
+
+        if (!Pattern.compile("[0-9]").matcher(password).find()) {
+            JOptionPane.showMessageDialog(this, "Password mora da sadrzi barem jedan broj!");
+            return;
+        }
+
+// + dodatak ako treba da budu samo brojevi
+
+if (!txtEDRw.getText().matches("\\d+")) {
+            JOptionPane.showMessageDialog(this, "samo brojevi!");
+            return;
+        }
