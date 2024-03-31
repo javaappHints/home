@@ -50,9 +50,12 @@ SUM(CASE WHEN *USLOV* THEN 1 ELSE 0 END) as nazivKolone
 Jedino sto se ovde menja kad brojite po uslovu je USLOV (i naziv kolone) !
 *****
 
-=========== ARI ===========
+===========================================================
+Primeri komandi:
 
-
+INSERT INTO Korisnik (atributi, atributi,atributi,...) VALUES (?,?,?,...)
+UPDATE Korisnik SET column1=?, column2=?,... WHERE korisnikId=...
+DELETE FROM Korisnik WHERE korisnikId = 16
 
 
 
