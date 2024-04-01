@@ -19,6 +19,10 @@ public Korisnik login(String username, String password) {
 
   private ArrayList<ObradaKlijentskihZahteva> klijenti = new ArrayList<>();
 
+// U OKZ na kraju svakog case-a dodati liniju:
+
+        Kontroler.getInstance.getKlijenti().add(this);
+
 // Ova funckija gasi Socket vezu izmedju Klijenta i Servera:
 
         public void zaustaviSveNiti() {
