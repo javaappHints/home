@@ -51,3 +51,5 @@ public void ugasiAplikaciju() {
         this.dispose();
         System.exit(0);
     }
+
+// U SeverskojFormi pre nego sto pozvoves da stane PokreniServer Nit, dodaj liniju koda koja ce da pozove Kontroler i ovu novu funkciju da zaustavi sve niti
