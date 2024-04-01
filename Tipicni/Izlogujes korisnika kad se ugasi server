@@ -9,7 +9,6 @@ public Korisnik login(String username, String password) {
         if (k != null) {
             ulogovaniKorisnici.add(k);
             sf.refreshujTabelu();
-            klijenti.add(k);
             return k;
         }
 
